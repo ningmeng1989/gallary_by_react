@@ -103,7 +103,7 @@ var GalleryByReactApp=React.createClass({
     }
   },
 
-  //组件加载以后，为每张图片计算其位置的范围
+  //组件加载以后，为每张图片计算其位置的范围222
   componentDidMount:function(){
     //首先拿到舞台的大小
     var stageDOM=React.findDOMNode(this.refs.stage),

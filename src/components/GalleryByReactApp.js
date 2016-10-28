@@ -1,41 +1,56 @@
+//导入样式信息
 require('normalize.css/normalize.css');
-//require('styles/App.css');
 require('styles/main.scss');
-
+//导入react库
 import React from 'react';
+import ReactDOM from 'react-dom';
 
-// 获取图片相关的数据
+// 获取图片信息json数据
 var imagesDatas=require('../data/imageDatas.json');
 
-//利用自执行函数，将图片名信息转为图片URL路径信息
+//利用自执行函数，处理图片信息json数据，将图片名信息转为图片URL路径信息
 imagesDatas=(function genImageURL(imageDatasArr){
   for(var i=0,j=imageDatasArr.length;i<j;i++){
     var singleImageData=imageDatasArr[i];
     singleImageData.imageURL=require('../images/'+singleImageData.fileName);
     imageDatasArr[i]=singleImageData;
   }
-
   return imageDatasArr;
 })(imagesDatas);
 
+//工具方法-获得一个范围内的随机数
 function getRangeRandom(low,high){
   return Math.ceil(Math.random()*(high-low)+low);
 }
 
+//创建单张图片组件
 var ImgFigure=React.createClass({
+
+  //render函数
   render:function(){
+
+    var styleObj={};
+
+    if(this.props.arrange.pos){
+      styleObj=this.props.arrange.pos;
+    }
+
     return (
-      <figure className="img-figure">
+      <figure className="img-figure" style={styleObj}>
         <img src={this.props.data.imageURL} alt={this.props.data.title}/>
         <figcaption>
           <h2  className="img-title">{this.props.data.title}</h2>
         </figcaption>
       </figure>
     )
+
   }
 });
 
+//创建单张画廊组件
 var GalleryByReactApp=React.createClass({
+
+  //图片位置范围取值
   Constant:{
     centerPos:{
       left:0,
@@ -52,14 +67,13 @@ var GalleryByReactApp=React.createClass({
     }
   },
 
-  //重新布局所有图片，param centerIndex 指定居中排布哪个图片
+  //方法函数-重新布局所有图片，param centerIndex 指定居中排布哪个图片
   rearrange:function(centerIndex){
-    "use strict";
     var imgsArrangeArr=this.state.imgsArrangeArr,
         Constant=this.Constant,
         centerPos=Constant.centerPos,
-        hPosRange=centerPos.hPosRange,
-        vPosRange=centerPos.vPosRange,
+        hPosRange=Constant.hPosRange,
+        vPosRange=Constant.vPosRange,
         hPosRangeLeftSecX=hPosRange.leftSecX,
         hPosRangeRightSecX=hPosRange.rightSecX,
         hPosRangeY=hPosRange.y,
@@ -73,28 +87,50 @@ var GalleryByReactApp=React.createClass({
 
         imgsArrangeCenterArr=imgsArrangeArr.splice(centerIndex,1);
 
-        imgsArrangeCenterArr[0].pos=centerPos;
+      imgsArrangeCenterArr[0].pos=centerPos;
 
-        topImgSpliceIndex=Math.ceil(Math.random()*(
-            imgsArrangeArr.length-topImgNum
-          ));
-        imgsArrangeTopArr=imgsArrangeArr.splice(
-            topImgSpliceIndex,topImgNum
-        );
+      topImgSpliceIndex=Math.ceil(Math.random()*(
+          imgsArrangeArr.length-topImgNum
+        ));
+      imgsArrangeTopArr=imgsArrangeArr.splice(
+          topImgSpliceIndex,topImgNum
+      );
+      //布局位于上侧的图片
+      imgsArrangeTopArr.forEach(function(vaule,index){
+        imgsArrangeTopArr[index].pos={
+          top:getRangeRandom(vPosRangeTopY[0],vPosRangeTopY[1]),
+          left:getRangeRandom(vPosRangeX[0],vPosRangeX[1])
+        }
+      });
+      //布局左右两侧的图片
+      for(var i=0,j=imgsArrangeArr.length,k=j/2;i<j;i++){
+        var hPosRangeLORX=null;
 
-        imgsArrangeTopArr.forEach(function(vaule,index){
-          imgsArrangeTopArr[index].pos={
-            top:getRangeRandom(vPosRangeTopY[0],vPosRangeTopY[1]),
-            left:getRangeRandom(vPosRangeX[0],vPosRangeX[1])
-          }
-        });
+        if(i<k){
+          hPosRangeLORX=hPosRangeLeftSecX;
+        }else{
+          hPosRangeLORX=hPosRangeRightSecX;
+        }
 
+        imgsArrangeArr[i].pos={
+          top:getRangeRandom(hPosRangeY[0],hPosRangeY[1]),
+          left:getRangeRandom(hPosRangeLORX[0],hPosRangeLORX[1])
+        }
 
+      }
+
+      if(imgsArrangeTopArr&&imgsArrangeTopArr[0]){
+        imgsArrangeArr.splice(topImgSpliceIndex,0,imgsArrangeTopArr[0]);
+      }
+
+      imgsArrangeArr.splice(centerIndex,0,imgsArrangeCenterArr[0]);
+
+      this.setState({
+        imgsArrangeArr:imgsArrangeArr
+      });
   },
 
-
-
-
+  //Hook-获取初始状态
   getInitialState:function(){
     return {
       imgsArrangeArr:[
@@ -103,17 +139,17 @@ var GalleryByReactApp=React.createClass({
     }
   },
 
-  //组件加载以后，为每张图片计算其位置的范围
+  //Hook-加载以后，计算位置的范围,并计算每张图片的位置
   componentDidMount:function(){
     //首先拿到舞台的大小
-    var stageDOM=React.findDOMNode(this.refs.stage),
+    var stageDOM=ReactDOM.findDOMNode(this.refs.stage),
         stageW=stageDOM.scrollWidth,
         stageH=stageDOM.scrollHeight,
         halfStageW=Math.ceil(stageW/2),
         halfStageH=Math.ceil(stageH/2);
 
     //拿到一个imageFigure的大小
-    var imgFigureDOM=React.findDOMNode(this.refs.imgFigure0),
+    var imgFigureDOM=ReactDOM.findDOMNode(this.refs.imgFigure0),
         imgW=imgFigureDOM.scrollWidth,
         imgH=imgFigureDOM.scrollHeight,
         halfImgW=Math.ceil(imgW/2),
@@ -127,19 +163,21 @@ var GalleryByReactApp=React.createClass({
     //计算左侧，右侧区域图片排布的取值范围
     this.Constant.hPosRange.leftSecX[0]=-halfImgW;
     this.Constant.hPosRange.leftSecX[1]=halfStageW-halfImgW*3;
-    this.Constant.hPosRange.rightSecX[0]=halfStageW-halfImgW;
+    this.Constant.hPosRange.rightSecX[0]=halfStageW+halfImgW;
     this.Constant.hPosRange.rightSecX[1]=stageW-halfImgW;
     this.Constant.hPosRange.y[0]=-halfImgH;
     this.Constant.hPosRange.y[1]=stageH-halfImgH;
 
     this.Constant.vPosRange.topY[0]=-halfImgH;
     this.Constant.vPosRange.topY[1]=halfStageH-halfImgH*3;
-    this.Constant.vPosRange.x[0]=halfImgW-imgW;
-    this.Constant.vPosRange.x[1]=halfImgW;
+    this.Constant.vPosRange.x[0]=halfStageW-imgW;
+    this.Constant.vPosRange.x[1]=halfStageW;
 
-
+    //重新排布每张照片位置
+    this.rearrange(0);
   },
 
+  //render函数
   render:function(){
 
     var controllerUnits=[],
@@ -156,7 +194,7 @@ var GalleryByReactApp=React.createClass({
         }
       }
 
-      imgFigures.push(<ImgFigure data={value} ref={'imgFigure'+index}/>);
+      imgFigures.push(<ImgFigure key={'imgFigure'+index} data={value} ref={'imgFigure'+index} arrange={this.state.imgsArrangeArr[index]}/>);
     }.bind(this));
 
     return(
@@ -178,22 +216,3 @@ GalleryByReactApp.defaultProps = {
 };
 
 export default GalleryByReactApp;
-
-
-//let yeomanImage = require('../images/yeoman.png');
-
-//class AppComponent extends React.Component {
-//  render() {
-//    return (
-//      <div className="index">
-//        <img src={yeomanImage} alt="Yeoman Generator" />hehehe
-//        <div className="notice">Please edit <code>src/components/Main.js</code> to get started!</div>
-//      </div>
-//    );
-//  }
-//}
-
-//AppComponent.defaultProps = {
-//};
-//
-//export default AppComponent;

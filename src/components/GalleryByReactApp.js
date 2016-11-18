@@ -4,6 +4,9 @@ require('styles/main.scss');
 //导入react库
 import React from 'react';
 import ReactDOM from 'react-dom';
+import ImgFigure from './ImgFigure';
+import ControllerUnit from './ControllerUnit';
+import {getRangeRandom,get30DegRandom} from '../util/util'
 
 // 获取图片信息json数据
 var imagesDatas=require('../data/imageDatas.json');
@@ -17,102 +20,6 @@ imagesDatas=(function genImageURL(imageDatasArr){
   }
   return imageDatasArr;
 })(imagesDatas);
-
-//工具方法-获得一个范围内的随机数
-function getRangeRandom(low,high){
-  return Math.ceil(Math.random()*(high-low)+low);
-}
-//工具方法-获得0-30范围内的随机数
-function get30DegRandom(){
-  return (Math.random()>0.5?'':'-')+Math.ceil(Math.random()*30);
-}
-
-//创建单张图片组件
-var ImgFigure=React.createClass({
-
-  handleClick:function(e){
-
-    if(this.props.arrange.isCenter){
-      this.props.inverse();
-    }else{
-      this.props.center();
-    }
-
-    e.stopPropagation();
-    e.preventDefault();
-  },
-
-  //render函数
-  render:function(){
-
-    var styleObj={};
-
-    //如果prop属性中指定了这张图片的位置，则使用
-    if(this.props.arrange.pos){
-      styleObj=this.props.arrange.pos;
-    }
-    //如果图片的旋转角度有并且不为0，添加旋转角度
-    if(this.props.arrange.rotate){
-      (['mozTransform','msTransform','webkitTransform','transform']).forEach(function(value){
-        styleObj[value]='rotate('+this.props.arrange.rotate+'deg)';
-      }.bind(this));
-    }
-
-    if(this.props.arrange.isCenter){
-      styleObj.zIndex=11;
-    }
-
-    var imgFigureClassName='img-figure';
-    imgFigureClassName+=this.props.arrange.isInverse?' is-inverse':'';
-
-    return (
-      <figure className={imgFigureClassName} style={styleObj} onClick={this.handleClick}>
-        <img src={this.props.data.imageURL} alt={this.props.data.title}/>
-        <figcaption>
-          <h2 className="img-title">{this.props.data.title}</h2>
-          <div className="img-back" onClick={this.handleClick}>
-            <p>
-              {this.props.data.description}
-            </p>
-          </div>
-        </figcaption>
-      </figure>
-    )
-
-  }
-});
-
-//控制组件
-var ControllerUnit=React.createClass({
-  handleClick:function(e){
-    //如果点击的是当前正在选中态的按钮，则翻转图片，否则将对应的图片居中
-    if(this.props.arrange.isCenter){
-      this.props.inverse();
-    }else{
-      this.props.center();
-    }
-    e.stopPropagation();
-    e.preventDefault();
-  },
-
-  render:function(){
-    var controllerUnitClassName='controller-unit';
-
-    //如果对应的是居中的图片，显示控制按钮的居中态
-    if(this.props.arrange.isCenter){
-      controllerUnitClassName+=' is-center';
-      //如果对应的是翻转图片，显示控制按钮的翻转态
-      if(this.props.arrange.isInverse){
-        controllerUnitClassName+=' is-inverse';
-      }
-    }
-
-    return(
-      <span className={controllerUnitClassName} onClick={this.handleClick}></span>
-    )
-  }
-});
-
 
 //创建单张画廊组件
 var GalleryByReactApp=React.createClass({
@@ -337,8 +244,5 @@ var GalleryByReactApp=React.createClass({
     )
   }
 });
-
-GalleryByReactApp.defaultProps = {
-};
 
 export default GalleryByReactApp;
